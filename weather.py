@@ -30,27 +30,31 @@ def get_weather(lat, lon):
 
 def main():
     print("--- Smart Weather App Backend Verification ---")
-    city = input("Enter city name: ") or "London"
+    while True:
+        print("\nPress 'q' to quit.")
+        city = input("Enter city name: ").capitalize()
+        if city.lower() == 'q':
+            break
     
-    print(f"\nSearching for {city}...")
-    location = get_coordinates(city)
+        print(f"\nSearching for {city}...")
+        location = get_coordinates(city)
     
-    if location:
-        print(f"Found: {location['name']}, {location['country']} ({location['latitude']}, {location['longitude']})")
-        weather = get_weather(location['latitude'], location['longitude'])
+        if location:
+            print(f"Found: {location['name']}, {location['country']} ({location['latitude']}, {location['longitude']})")
+            weather = get_weather(location['latitude'], location['longitude'])
         
-        if weather:
-            current = weather['current']
-            print("\n--- Current Weather ---")
-            print(f"Temperature: {current['temperature_2m']}°C")
-            print(f"Apparent Temp: {current['apparent_temperature']}°C")
-            print(f"Humidity: {current['relative_humidity_2m']}%")
-            print(f"Wind Speed: {current['wind_speed_10m']} km/h")
-            print(f"Condition Code: {current['weather_code']}")
+            if weather:
+                current = weather['current']
+                print("\n--- Current Weather ---")
+                print(f"Temperature: {current['temperature_2m']}°C")
+                print(f"Apparent Temp: {current['apparent_temperature']}°C")
+                print(f"Humidity: {current['relative_humidity_2m']}%")
+                print(f"Wind Speed: {current['wind_speed_10m']} km/h")
+                print(f"Condition Code: {current['weather_code']}")
+            else:
+                print("Failed to fetch weather data.")
         else:
-            print("Failed to fetch weather data.")
-    else:
-        print("City not found.")
+            print("City not found. Try again...")
 
 if __name__ == "__main__":
     main()
