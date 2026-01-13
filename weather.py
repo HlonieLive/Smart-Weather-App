@@ -1,84 +1,56 @@
-# Imports:
-import pygame
+# Real-time weather data fetching using Open-Meteo API
+
 import requests
+import json
 
-# Initialise Pygame
-pygame.init()
+def get_coordinates(city_name):
+    """Fetch coordinates for a given city name using Open-Meteo Geocoding API."""
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={city_name}&count=1&language=en&format=json"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if "results" in data and len(data["results"]) > 0:
+            result = data["results"][0]
+            return {
+                "name": result["name"],
+                "latitude": result["latitude"],
+                "longitude": result["longitude"],
+                "country": result.get("country", ""),
+                "timezone": result.get("timezone", "UTC")
+            }
+    return None
 
-# Create a window/screen:
-screen = pygame.display.set_mode((800, 600))
-pygame.display.set_caption("Weather App")
-
-# Create buttons:
-days = pygame.Rect(100, 100, 100, 50)
-wind = pygame.Rect(300, 100, 100, 50)
-humidity = pygame.Rect(500, 100, 100, 50)
-hours = pygame.Rect(700, 100, 100, 50)
-
-# Colors
-white = (255, 255, 255)
-black = (0, 0, 0)
-button_color = (211, 211, 211)
-clicked_color = (105, 105, 105)
-
-def draw_button(button, color, text):
-    """This function draws a button"""
-    pygame.draw.rect(screen, color, button)
-    font = pygame.font.SysFont("Arial", 15)
-    text_surface = font.render(text, True, (255, 255, 255))
-    screen.blit(text_surface, (button.x + 20, button.y + 20))
-
-
-def get_weather(city, api_key):
-    """This Function gets the weather from OpenWeatherMap API"""
-
-    base_url = "http://api.openweathermap.org/data/2.5/weather"
-    parameters = {
-        "q": city,
-        "appid": api_key,
-        "units": "metric"
-    }
-    try:
-        response = requests.get(base_url, params=parameters)
-        response.raise_for_status()
+def get_weather(lat, lon):
+    """Fetch real-time weather data for given coordinates."""
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto"
+    response = requests.get(url)
+    if response.status_code == 200:
         return response.json()
-    except requests.exceptions.RequestException as e:
-        print("Error fetching weather data: {e}")
-        return
+    return None
 
-# A Loop that keeps the screen ON
-running = True
-button1_clicked = False
-button2_clicked = False
-button3_clicked = False
-button4_clicked = False
+def main():
+    print("--- Smart Weather App Backend Verification ---")
+    city = input("Enter city name: ") or "London"
+    
+    print(f"\nSearching for {city}...")
+    location = get_coordinates(city)
+    
+    if location:
+        print(f"Found: {location['name']}, {location['country']} ({location['latitude']}, {location['longitude']})")
+        weather = get_weather(location['latitude'], location['longitude'])
+        
+        if weather:
+            current = weather['current']
+            print("\n--- Current Weather ---")
+            print(f"Temperature: {current['temperature_2m']}°C")
+            print(f"Apparent Temp: {current['apparent_temperature']}°C")
+            print(f"Humidity: {current['relative_humidity_2m']}%")
+            print(f"Wind Speed: {current['wind_speed_10m']} km/h")
+            print(f"Condition Code: {current['weather_code']}")
+        else:
+            print("Failed to fetch weather data.")
+    else:
+        print("City not found.")
 
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_pos = pygame.mouse.get_pos()
-            if days.collidepoint(mouse_pos):
-                button1_clicked = not button1_clicked
-            if wind.collidepoint(mouse_pos):
-                button2_clicked = not button2_clicked
-            if humidity.collidepoint(mouse_pos):
-                button3_clicked = not button3_clicked
-            if hours.collidepoint(mouse_pos):
-                button4_clicked = not button4_clicked
-
-    # Fill the screen with a background color (optional)
-    screen.fill((255, 255, 255))
-
-    # Draw the buttons with different colors based on their state
-    draw_button(days, clicked_color if button1_clicked else button_color, "Days")
-    draw_button(wind, clicked_color if button2_clicked else button_color, "Wind")
-    draw_button(humidity, clicked_color if button3_clicked else button_color, "Humidity")
-    draw_button(hours, clicked_color if button3_clicked else button_color, "Hours")
-
-    # update the screen
-    pygame.display.update()
-
-# Quits the game
-pygame.quit()
+if __name__ == "__main__":
+    main()
