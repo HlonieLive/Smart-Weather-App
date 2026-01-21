@@ -2,6 +2,7 @@
 
 import requests
 import json
+from datetime import datetime
 
 def get_coordinates(city_name):
     """Fetch coordinates for a given city name using Open-Meteo Geocoding API."""
@@ -28,6 +29,32 @@ def get_weather(lat, lon):
         return response.json()
     return None
 
+def get_weather_description(temp):
+    """Return a descriptive state based on temperature."""
+    if temp < 0:
+        return "Freezing Cold"
+    elif 0 <= temp < 10:
+        return "Cold"
+    elif 10 <= temp < 20:
+        return "Cool"
+    elif 20 <= temp < 30:
+        return "Warm"
+    else:
+        return "Hot"
+
+def get_clothing_suggestion(temp):
+    """Return a clothing suggestion based on temperature."""
+    if temp < 0:
+        return "Wear heavy winter jacket, scarf, gloves, and hat."
+    elif 0 <= temp < 10:
+        return "Wear a coat or a thick sweater."
+    elif 10 <= temp < 20:
+        return "A light jacket or sweater is recommended."
+    elif 20 <= temp < 30:
+        return "T-shirt and light pants/shorts are fine."
+    else:
+        return "Wear light, breathable clothing. Stay hydrated."
+
 def main():
     print("--- Smart Weather App Backend Verification ---")
     while True:
@@ -45,12 +72,19 @@ def main():
         
             if weather:
                 current = weather['current']
+                appt_temp = current['apparent_temperature']
+                weather_desc = get_weather_description(appt_temp)
+                clothing_suggestion = get_clothing_suggestion(appt_temp)
+
                 print("\n--- Current Weather ---")
+                print(f"Timezone: {location['timezone']}")
+                print(f"Date: {datetime.now().strftime('%A, %d %b %Y')}")
                 print(f"Temperature: {current['temperature_2m']}°C")
-                print(f"Apparent Temp: {current['apparent_temperature']}°C")
+                print(f"Apparent Temp: {appt_temp}°C")
                 print(f"Humidity: {current['relative_humidity_2m']}%")
                 print(f"Wind Speed: {current['wind_speed_10m']} km/h")
                 print(f"Condition Code: {current['weather_code']}")
+                print(f"\nWeather Description:\nIt is {weather_desc} today.\n{clothing_suggestion}")
             else:
                 print("Failed to fetch weather data.")
         else:
