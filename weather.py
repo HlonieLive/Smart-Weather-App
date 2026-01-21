@@ -1,5 +1,4 @@
 # Real-time weather data fetching using Open-Meteo API
-
 import requests
 import json
 from datetime import datetime
@@ -42,21 +41,52 @@ def get_weather_description(temp):
     else:
         return "Hot"
 
-def get_clothing_suggestion(temp):
-    """Return a clothing suggestion based on temperature."""
+def get_weather_condition(code):
+    """Return a string description of the weather code (WMO)."""
+    if code == 0: return "Clear Sky"
+    if code in [1, 2, 3]: return "Partly Cloudy"
+    if code in [45, 48]: return "Foggy"
+    if code in [51, 53, 55]: return "Drizzling"
+    if code in [56, 57]: return "Freezing Drizzle"
+    if code in [61, 63, 65]: return "Raining"
+    if code in [66, 67]: return "Freezing Rain"
+    if code in [71, 73, 75]: return "Snowing"
+    if code == 77: return "Snow Grains"
+    if code in [80, 81, 82]: return "Rain Showers"
+    if code in [85, 86]: return "Snow Showers"
+    if code == 95: return "Thunderstorm"
+    if code in [96, 99]: return "Thunderstorm with Hail"
+    return "Unknown Condition"
+
+def get_clothing_suggestion(temp, code=None):
+    """Return a clothing suggestion based on temperature and weather condition."""
+    suggestion = ""
+    
+    # Temperature-based suggestions
     if temp < 0:
-        return "Wear heavy winter jacket, scarf, gloves, and hat."
+        suggestion = "Wear heavy winter jacket, scarf, gloves, and hat."
     elif 0 <= temp < 10:
-        return "Wear a coat or a thick sweater."
+        suggestion = "Wear a coat or a thick sweater."
     elif 10 <= temp < 20:
-        return "A light jacket or sweater is recommended."
+        suggestion = "A light jacket or sweater is recommended."
     elif 20 <= temp < 30:
-        return "T-shirt and light pants/shorts are fine."
+        suggestion = "T-shirt and light pants/shorts are fine."
     else:
-        return "Wear light, breathable clothing. Stay hydrated."
+        suggestion = "Wear light, breathable clothing. Stay hydrated."
+
+    # Weather condition-based additions
+    if code is not None:
+        # Rain/Drizzle/Thunderstorm
+        if code in [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99]:
+            suggestion += " Don't forget an umbrella or raincoat!"
+        # Snow
+        elif code in [71, 73, 75, 77, 85, 86]:
+            suggestion += " Wear waterproof boots."
+
+    return suggestion
 
 def main():
-    print("--- Smart Weather App Backend Verification ---")
+    print("--- Smart Weather App ---")
     while True:
         print("\nPress 'q' to quit.")
         city = input("Enter city name: ").capitalize()
@@ -73,18 +103,22 @@ def main():
             if weather:
                 current = weather['current']
                 appt_temp = current['apparent_temperature']
+                w_code = current['weather_code']
+                
                 weather_desc = get_weather_description(appt_temp)
-                clothing_suggestion = get_clothing_suggestion(appt_temp)
+                condition_desc = get_weather_condition(w_code)
+                clothing_suggestion = get_clothing_suggestion(appt_temp, w_code)
+
+                print(f"Timezone: {location['timezone']}")
+                print(f"Date: {datetime.now().strftime('%A, %d %b %Y')}\n")
 
                 print("\n--- Current Weather ---")
-                print(f"Timezone: {location['timezone']}")
-                print(f"Date: {datetime.now().strftime('%A, %d %b %Y')}")
                 print(f"Temperature: {current['temperature_2m']}°C")
                 print(f"Apparent Temp: {appt_temp}°C")
                 print(f"Humidity: {current['relative_humidity_2m']}%")
                 print(f"Wind Speed: {current['wind_speed_10m']} km/h")
-                print(f"Condition Code: {current['weather_code']}")
-                print(f"\nWeather Description:\nIt is {weather_desc} today.\n{clothing_suggestion}")
+                print(f"Condition: {condition_desc}")
+                print(f"\nWeather Description:\nIt is {condition_desc} and {weather_desc} today.\n{clothing_suggestion}")
             else:
                 print("Failed to fetch weather data.")
         else:
